@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolyBot Dashboard</title>
+    <style>
+        :root {
+            --bg: #0a0e17;
+            --surface: #131a2b;
+            --surface2: #1a2340;
+            --border: #1e2d4a;
+            --text: #e0e6f0;
+            --text-dim: #7a8ba8;
+            --accent: #3b82f6;
+            --green: #22c55e;
+            --red: #ef4444;
+            --amber: #f59e0b;
+            --purple: #a855f7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .mode-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mode-dry { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .mode-live { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .status-bar {
+            background: var(--surface);
+            padding: 10px 24px;
+            font-size: 13px;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 24px;
+        }
+
+        .status-bar .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        .dot-green { background: var(--green); }
+        .dot-red { background: var(--red); }
+        .dot-amber { background: var(--amber); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            padding: 20px 24px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover { border-color: var(--accent); }
+
+        .card h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .card .value {
+            font-size: 28px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .card .sub {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .positive { color: var(--green); }
+        .negative { color: var(--red); }
+        .neutral { color: var(--text-dim); }
+
+        .wide-card {
+            grid-column: 1 / -1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            text-align: left;
+            padding: 8px 12px;
+            color: var(--text-dim);
+            font-weight: 500;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(30, 45, 74, 0.5);
+            font-variant-numeric: tabular-nums;
+        }
+
+        tr:hover td { background: rgba(59, 130, 246, 0.05); }
+
+        .signal-bar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 0 24px 16px;
+            padding: 16px 20px;
+        }
+
+        .signal-bar h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+        }
+
+        .signal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+        }
+
+        .signal-item {
+            background: var(--surface2);
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .signal-item .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+        }
+
+        .signal-item .val {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 2px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .position-banner {
+            margin: 0 24px 16px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .position-up {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: var(--green);
+        }
+
+        .position-down {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--red);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 PolyBot Dashboard</h1>
+        <span id="modeBadge" class="mode-badge mode-dry">DRY RUN</span>
+    </div>
+
+    <div class="status-bar">
+        <span><span id="wsDot" class="dot dot-red"></span> <span id="wsStatus">Disconnected</span></span>
+        <span>Status: <strong id="botStatus">—</strong></span>
+        <span>BTC: <strong id="btcPrice">$—</strong></span>
+        <span id="timeRemaining"></span>
+    </div>
+
+    <div id="positionBanner"></div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Daily P&L</h3>
+            <div id="dailyPnl" class="value neutral">$0.00</div>
+            <div class="sub" id="dailyTrades">0 trades today</div>
+        </div>
+        <div class="card">
+            <h3>Total P&L</h3>
+            <div id="totalPnl" class="value neutral">$0.00</div>
+            <div class="sub" id="totalTrades">0 total trades</div>
+        </div>
+        <div class="card">
+            <h3>Win Rate</h3>
+            <div id="winRate" class="value">0%</div>
+            <div class="sub" id="winLoss">0W / 0L</div>
+        </div>
+        <div class="card">
+            <h3>Bankroll</h3>
+            <div id="bankroll" class="value">$0.00</div>
+            <div class="sub" id="nextBet">Next bet: $0.00</div>
+        </div>
+    </div>
+
+    <div class="signal-bar">
+        <h3>Live Signals</h3>
+        <div class="signal-grid">
+            <div class="signal-item">
+                <div class="label">Distance</div>
+                <div class="val" id="sigDistance">$0.00</div>
+            </div>
+            <div class="signal-item">
+                <div class="label">Direction</div>
+                <div class="val" id="sigDirection">—</div>
+            </div>
+            <div class="signal-item">
+                <div class="label">Vol (60s)</div>
+                <div class="val" id="sigVol">$0.00</div>
+            </div>
+            <div class="signal-item">
+                <div class="label">Momentum</div>
+                <div class="val" id="sigMomentum">$0.00</div>
+            </div>
+            <div class="signal-item">
+                <div class="label">Model Prob</div>
+                <div class="val" id="sigModelProb">0.000</div>
+            </div>
+            <div class="signal-item">
+                <div class="label">Market Prob</div>
+                <div class="val" id="sigMarketProb">0.000</div>
+            </div>
+            <div class="signal-item">
+                <div class="label">Edge</div>
+                <div class="val" id="sigEdge">0.0%</div>
+            </div>
+            <div class="signal-item">
+                <div class="label">OB Imbalance</div>
+                <div class="val" id="sigImbalance">0.000</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card wide-card">
+            <h3>Recent Trades</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Side</th>
+                        <th>Entry</th>
+                        <th>Exit</th>
+                        <th>Size</th>
+                        <th>P&L</th>
+                        <th>Edge</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="tradesBody">
+                    <tr><td colspan="8" style="text-align:center; color: var(--text-dim)">No trades yet</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        PolyBot v1.0 — Auto-refreshes every 2 seconds
+    </div>
+
+    <script>
+        function formatUSD(val) {
+            if (val === null || val === undefined) return '$0.00';
+            const n = parseFloat(val);
+            return (n >= 0 ? '+' : '') + '$' + n.toFixed(2);
+        }
+
+        function pnlClass(val) {
+            const n = parseFloat(val);
+            return n > 0 ? 'positive' : n < 0 ? 'negative' : 'neutral';
+        }
+
+        async function refresh() {
+            try {
+                const res = await fetch('/api/state');
+                const s = await res.json();
+
+                // Mode badge
+                const badge = document.getElementById('modeBadge');
+                if (s.dry_run) {
+                    badge.textContent = 'DRY RUN';
+                    badge.className = 'mode-badge mode-dry';
+                } else {
+                    badge.textContent = 'LIVE';
+                    badge.className = 'mode-badge mode-live';
+                }
+
+                // WebSocket status
+                const dot = document.getElementById('wsDot');
+                const wsText = document.getElementById('wsStatus');
+                if (s.ws_connected) {
+                    dot.className = 'dot dot-green';
+                    wsText.textContent = 'Connected';
+                } else {
+                    dot.className = 'dot dot-amber';
+                    wsText.textContent = 'Reconnecting...';
+                }
+
+                // Bot status
+                document.getElementById('botStatus').textContent = s.status || '—';
+
+                // BTC price
+                const price = parseFloat(s.btc_price || 0);
+                document.getElementById('btcPrice').textContent = price > 0 ? '$' + price.toLocaleString(undefined, {maximumFractionDigits: 2}) : '$—';
+
+                // Market timing
+                const timeEl = document.getElementById('timeRemaining');
+                if (s.market && s.market.seconds_remaining > 0) {
+                    const sec = Math.floor(s.market.seconds_remaining);
+                    const min = Math.floor(sec / 60);
+                    const rem = sec % 60;
+                    timeEl.textContent = `Market: ${min}:${String(rem).padStart(2, '0')} remaining`;
+                    if (s.market.in_entry_window) {
+                        timeEl.style.color = '#22c55e';
+                        timeEl.style.fontWeight = '700';
+                    } else {
+                        timeEl.style.color = '';
+                        timeEl.style.fontWeight = '';
+                    }
+                } else {
+                    timeEl.textContent = '';
+                }
+
+                // Position banner
+                const posBanner = document.getElementById('positionBanner');
+                if (s.position) {
+                    const cls = s.position.side === 'UP' ? 'position-up' : 'position-down';
+                    posBanner.innerHTML = `<div class="position-banner ${cls}" style="margin: 0 24px 16px;">
+                        <span>📌 POSITION: ${s.position.side} @ ${parseFloat(s.position.entry_price).toFixed(3)}</span>
+                        <span>Edge: ${parseFloat(s.position.entry_edge).toFixed(1)}%</span>
+                    </div>`;
+                } else {
+                    posBanner.innerHTML = '';
+                }
+
+                // Stats cards
+                if (s.risk) {
+                    const dp = parseFloat(s.risk.daily_pnl || 0);
+                    document.getElementById('dailyPnl').textContent = formatUSD(dp);
+                    document.getElementById('dailyPnl').className = 'value ' + pnlClass(dp);
+                    document.getElementById('dailyTrades').textContent = (s.risk.daily_trades || 0) + ' trades today';
+                    document.getElementById('bankroll').textContent = '$' + parseFloat(s.risk.bankroll || 0).toFixed(2);
+                    document.getElementById('nextBet').textContent = 'Next bet: $' + parseFloat(s.risk.next_position_size || 0).toFixed(2);
+                }
+
+                if (s.stats) {
+                    const tp = parseFloat(s.stats.total_pnl || 0);
+                    document.getElementById('totalPnl').textContent = formatUSD(tp);
+                    document.getElementById('totalPnl').className = 'value ' + pnlClass(tp);
+                    document.getElementById('totalTrades').textContent = (s.stats.total_trades || 0) + ' total trades';
+                    document.getElementById('winRate').textContent = parseFloat(s.stats.win_rate || 0).toFixed(1) + '%';
+                    document.getElementById('winLoss').textContent = (s.stats.wins || 0) + 'W / ' + (s.stats.losses || 0) + 'L';
+                }
+
+                // Live signals
+                if (s.signal) {
+                    const sig = s.signal;
+                    document.getElementById('sigDistance').textContent = '$' + parseFloat(sig.distance || 0).toFixed(2);
+                    document.getElementById('sigDistance').className = 'val ' + ((sig.distance || 0) > 0 ? 'positive' : (sig.distance || 0) < 0 ? 'negative' : '');
+                    document.getElementById('sigDirection').textContent = sig.direction || '—';
+                    document.getElementById('sigVol').textContent = '$' + parseFloat(sig.volatility_60s || 0).toFixed(2);
+                    document.getElementById('sigMomentum').textContent = '$' + parseFloat(sig.momentum_30s || 0).toFixed(2);
+                    document.getElementById('sigModelProb').textContent = parseFloat(sig.model_prob || 0).toFixed(3);
+                    document.getElementById('sigMarketProb').textContent = parseFloat(
+                        sig.direction === 'UP' ? (sig.market_prob_up || 0) : (sig.market_prob_down || 0)
+                    ).toFixed(3);
+                    const edge = parseFloat(sig.edge || 0);
+                    document.getElementById('sigEdge').textContent = edge.toFixed(1) + '%';
+                    document.getElementById('sigEdge').className = 'val ' + (edge > 3 ? 'positive' : edge > 0 ? 'neutral' : 'negative');
+                    document.getElementById('sigImbalance').textContent = parseFloat(sig.ob_imbalance || 0).toFixed(3);
+                }
+
+            } catch (e) {
+                console.error('Refresh error:', e);
+            }
+
+            // Refresh trades table
+            try {
+                const tRes = await fetch('/api/trades');
+                const trades = await tRes.json();
+                const tbody = document.getElementById('tradesBody');
+
+                if (trades.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-dim)">No trades yet</td></tr>';
+                } else {
+                    tbody.innerHTML = trades.slice(0, 20).map(t => {
+                        const pnl = parseFloat(t.pnl || 0);
+                        const cls = pnlClass(pnl);
+                        return `<tr>
+                            <td>${(t.timestamp || '').slice(11, 19)}</td>
+                            <td><strong>${t.side || '—'}</strong></td>
+                            <td>${parseFloat(t.entry_price || 0).toFixed(3)}</td>
+                            <td>${parseFloat(t.exit_price || 0).toFixed(3)}</td>
+                            <td>$${parseFloat(t.size_usd || 0).toFixed(2)}</td>
+                            <td class="${cls}">${formatUSD(pnl)}</td>
+                            <td>${parseFloat(t.edge || 0).toFixed(1)}%</td>
+                            <td style="color: var(--text-dim)">${t.exit_reason || '—'}</td>
+                        </tr>`;
+                    }).join('');
+                }
+            } catch (e) {}
+        }
+
+        // Initial refresh + auto-refresh
+        refresh();
+        setInterval(refresh, 2000);
+    </script>
+</body>
+</html>
