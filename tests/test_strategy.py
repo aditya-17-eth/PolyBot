@@ -201,6 +201,40 @@ class TestStrategyEntry:
         assert decision.action == Action.SKIP
         assert any("already" in r for r in decision.skip_reasons)
 
+    def test_strike_crossing_strategy(self):
+        strategy = Strategy()
+        # Price is slightly UP (+10) but plunging fast (-50 momentum)
+        snap = self._make_good_signal(
+            distance=10, distance_abs=10, direction="UP",
+            momentum_30s=-50.0, model_prob=0.52,
+            market_prob_down=0.20, market_prob_up=0.80,
+            time_remaining=45,
+            # We override standard skips that might block the overall function
+            volatility_60s=50, market_spread=0.01
+        )
+        decision = strategy.evaluate_entry(snap)
+        
+        # Should bet DOWN because of the strike crossing
+        assert decision.action == Action.BUY_DOWN
+        assert decision.side == "DOWN"
+        assert "CROSS_ENTRY" in decision.reason
+
+    def test_momentum_breakout_strategy(self):
+        strategy = Strategy()
+        # Still 120s remaining, so standard strategy would skip (too early)
+        snap = self._make_good_signal(
+            distance=50, distance_abs=50, direction="UP",
+            momentum_30s=35.0, model_prob=0.85,
+            market_prob_up=0.75, market_prob_down=0.25,
+            time_remaining=120, edge=8.0
+        )
+        decision = strategy.evaluate_entry(snap)
+        
+        # Standard skips but Breakout should trigger
+        assert decision.action == Action.BUY_UP
+        assert decision.side == "UP"
+        assert "BRK_ENTRY" in decision.reason
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Strategy Exit Tests

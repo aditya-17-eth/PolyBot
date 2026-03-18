@@ -74,90 +74,161 @@ class Strategy:
         self.current_position: Position = None
 
     def evaluate_entry(self, snap: SignalSnapshot) -> TradeDecision:
-        """Evaluate whether to enter a trade."""
-        decision = TradeDecision()
+        """Evaluate whether to enter a trade using multiple sub-strategies."""
+        if self.current_position:
+            return TradeDecision(action=Action.SKIP, skip_reasons=["already_in_position"], reason="already_in_position")
+
+        if not snap.direction:
+            return TradeDecision(action=Action.SKIP, skip_reasons=["no_direction"], reason="no_direction")
+
+        # Global disqualifiers
+        global_skips = []
+        if snap.market_spread > config.MAX_SPREAD:
+            global_skips.append(f"spread_too_wide ({snap.market_spread:.4f} > {config.MAX_SPREAD})")
+        if snap.liquidity_trap_score > 0.7:
+            global_skips.append(f"liquidity_trap (score: {snap.liquidity_trap_score:.2f})")
+        if snap.time_remaining <= config.EXIT_WINDOW_SECS:
+            global_skips.append(f"too_late ({snap.time_remaining:.0f}s remaining)")
+        if snap.volatility_60s < config.MIN_VOLATILITY_USD:
+            global_skips.append(f"low_volatility (${snap.volatility_60s:.2f})")
+
+        if global_skips:
+            return TradeDecision(action=Action.SKIP, skip_reasons=global_skips, reason=global_skips[0])
+
+        candidates = []
         skip_reasons = []
 
-        # ── Time Check ─────────────────────────────────────────────
-        if snap.time_remaining > config.ENTRY_WINDOW_SECS:
-            skip_reasons.append(f"too_early ({snap.time_remaining:.0f}s remaining)")
-
-        if snap.time_remaining <= config.EXIT_WINDOW_SECS:
-            skip_reasons.append(f"too_late ({snap.time_remaining:.0f}s remaining)")
-
-        # ── Direction Check ────────────────────────────────────────
-        if not snap.direction:
-            skip_reasons.append("no_direction (price at start)")
-
-        # ── Distance Check ─────────────────────────────────────────
-        if snap.distance_abs < config.MIN_DISTANCE_USD:
-            skip_reasons.append(
-                f"distance_too_small (${snap.distance_abs:.2f} < ${config.MIN_DISTANCE_USD})"
-            )
-
-        # ── Volatility Check ───────────────────────────────────────
-        if snap.volatility_60s < config.MIN_VOLATILITY_USD:
-            skip_reasons.append(
-                f"low_volatility (${snap.volatility_60s:.2f} < ${config.MIN_VOLATILITY_USD})"
-            )
-
-        # ── Spread Check ───────────────────────────────────────────
-        if snap.market_spread > config.MAX_SPREAD:
-            skip_reasons.append(
-                f"spread_too_wide ({snap.market_spread:.4f} > {config.MAX_SPREAD})"
-            )
-
-        # ── Liquidity Trap Check ───────────────────────────────────
-        if snap.liquidity_trap_score > 0.7:
-            skip_reasons.append(
-                f"liquidity_trap (score: {snap.liquidity_trap_score:.2f})"
-            )
-
-        # ── Edge Check ─────────────────────────────────────────────
-        if snap.edge < config.MIN_EDGE_PCT:
-            skip_reasons.append(
-                f"edge_too_small ({snap.edge:.2f}% < {config.MIN_EDGE_PCT}%)"
-            )
-
-        # ── Momentum Alignment ─────────────────────────────────────
-        # If distance is UP, momentum should not be strongly negative
-        if snap.direction == "UP" and snap.momentum_30s < -snap.distance_abs * 0.3:
-            skip_reasons.append("momentum_against_direction")
-        elif snap.direction == "DOWN" and snap.momentum_30s > snap.distance_abs * 0.3:
-            skip_reasons.append("momentum_against_direction")
-
-        # ── Already in position ────────────────────────────────────
-        if self.current_position:
-            skip_reasons.append("already_in_position")
-
-        # ── Decision ───────────────────────────────────────────────
-        if skip_reasons:
-            decision.action = Action.SKIP
-            decision.skip_reasons = skip_reasons
-            decision.reason = skip_reasons[0]  # Primary reason
-            return decision
-
-        # All conditions met — generate entry signal
-        if snap.direction == "UP":
-            decision.action = Action.BUY_UP
-            decision.side = "UP"
-            decision.market_price = snap.market_prob_up
+        # ── Strategy 1: Standard Late Window ───────────────────────
+        s1_decision = self._eval_standard(snap)
+        if s1_decision.action != Action.SKIP:
+            candidates.append(s1_decision)
         else:
-            decision.action = Action.BUY_DOWN
-            decision.side = "DOWN"
-            decision.market_price = snap.market_prob_down
+            skip_reasons.extend(s1_decision.skip_reasons)
 
-        decision.edge = snap.edge
-        decision.model_prob = snap.model_prob
-        decision.confidence = min(snap.model_prob, 0.99)
-        decision.reason = (
-            f"ENTRY: d=${snap.distance:+.0f}, "
-            f"t={snap.time_remaining:.0f}s, "
-            f"edge={snap.edge:.1f}%, "
-            f"P={snap.model_prob:.3f}"
+        # ── Strategy 2: Strike Crossing (Mean Reversion) ───────────
+        s2_decision = self._eval_strike_crossing(snap)
+        if s2_decision.action != Action.SKIP:
+            candidates.append(s2_decision)
+        else:
+            skip_reasons.extend(s2_decision.skip_reasons)
+
+        # ── Strategy 3: Early Momentum Breakout ────────────────────
+        s3_decision = self._eval_momentum_breakout(snap)
+        if s3_decision.action != Action.SKIP:
+            candidates.append(s3_decision)
+        else:
+            skip_reasons.extend(s3_decision.skip_reasons)
+
+        if candidates:
+            # Pick the candidate with the highest edge
+            best_decision = max(candidates, key=lambda d: d.edge)
+            return best_decision
+
+        # Remove duplicates from skip reasons
+        unique_skips = list(dict.fromkeys(skip_reasons))
+        return TradeDecision(action=Action.SKIP, skip_reasons=unique_skips, reason=unique_skips[0] if unique_skips else "no_signal")
+
+    def _eval_standard(self, snap: SignalSnapshot) -> TradeDecision:
+        skips = []
+        if snap.time_remaining > config.ENTRY_WINDOW_SECS:
+            skips.append(f"std_too_early ({snap.time_remaining:.0f}s > {config.ENTRY_WINDOW_SECS})")
+        if snap.distance_abs < config.MIN_DISTANCE_USD:
+            skips.append(f"std_distance_too_small (${snap.distance_abs:.2f})")
+        if snap.edge < config.MIN_EDGE_PCT:
+            skips.append(f"std_edge_too_small ({snap.edge:.2f}%)")
+            
+        if snap.direction == "UP" and snap.momentum_30s < -snap.distance_abs * 0.3:
+            skips.append("std_momentum_against_UP")
+        elif snap.direction == "DOWN" and snap.momentum_30s > snap.distance_abs * 0.3:
+            skips.append("std_momentum_against_DOWN")
+
+        if skips:
+            return TradeDecision(action=Action.SKIP, skip_reasons=skips)
+
+        side = snap.direction
+        market_price = snap.market_prob_up if side == "UP" else snap.market_prob_down
+        return TradeDecision(
+            action=Action.BUY_UP if side == "UP" else Action.BUY_DOWN,
+            side=side,
+            confidence=min(snap.model_prob, 0.99),
+            edge=snap.edge,
+            model_prob=snap.model_prob,
+            market_price=market_price,
+            reason=f"STD_ENTRY: d=${snap.distance:+.0f}, t={snap.time_remaining:.0f}s, edge={snap.edge:.1f}%"
         )
 
-        return decision
+    def _eval_strike_crossing(self, snap: SignalSnapshot) -> TradeDecision:
+        skips = []
+        if snap.time_remaining > config.ENTRY_WINDOW_SECS:
+            skips.append(f"cross_too_early")
+        
+        thresh = config.MIN_DISTANCE_USD * 1.5
+        if snap.distance_abs > thresh:
+            skips.append(f"cross_too_far (${snap.distance_abs:.2f} > {thresh})")
+
+        opposite_side = "DOWN" if snap.direction == "UP" else "UP"
+        momentum_req = 40.0
+        
+        if snap.direction == "UP" and snap.momentum_30s > -momentum_req:
+            skips.append("cross_no_downward_momentum")
+        elif snap.direction == "DOWN" and snap.momentum_30s < momentum_req:
+            skips.append("cross_no_upward_momentum")
+
+        cross_prob = 1.0 - snap.model_prob
+        market_cross_prob = snap.market_prob_down if opposite_side == "DOWN" else snap.market_prob_up
+        fee = config.MAX_FEE_PCT / 100.0
+        cross_edge = (cross_prob - market_cross_prob - fee) * 100
+
+        if cross_edge < config.MIN_EDGE_PCT:
+            skips.append(f"cross_edge_too_small ({cross_edge:.2f}%)")
+
+        if skips:
+            return TradeDecision(action=Action.SKIP, skip_reasons=skips)
+
+        return TradeDecision(
+            action=Action.BUY_UP if opposite_side == "UP" else Action.BUY_DOWN,
+            side=opposite_side,
+            confidence=min(cross_prob, 0.99),
+            edge=cross_edge,
+            model_prob=cross_prob,
+            market_price=market_cross_prob,
+            reason=f"CROSS_ENTRY: betting {opposite_side}, current d=${snap.distance:+.0f}, mom=${snap.momentum_30s:.1f}"
+        )
+
+    def _eval_momentum_breakout(self, snap: SignalSnapshot) -> TradeDecision:
+        skips = []
+        if snap.time_remaining <= config.ENTRY_WINDOW_SECS:
+            skips.append("brk_too_late")
+        if snap.time_remaining > 240:
+            skips.append("brk_too_early")
+            
+        if snap.distance_abs < config.MIN_DISTANCE_USD:
+            skips.append("brk_dist_too_small")
+
+        if snap.direction == "UP":
+            if snap.momentum_30s < snap.distance_abs * 0.5:
+                skips.append("brk_mom_too_weak_UP")
+        else:
+            if snap.momentum_30s > -snap.distance_abs * 0.5:
+                skips.append("brk_mom_too_weak_DOWN")
+
+        if snap.edge <= 0.5:
+            skips.append(f"brk_edge_too_small ({snap.edge:.2f}%)")
+
+        if skips:
+            return TradeDecision(action=Action.SKIP, skip_reasons=skips)
+
+        side = snap.direction
+        market_price = snap.market_prob_up if side == "UP" else snap.market_prob_down
+        return TradeDecision(
+            action=Action.BUY_UP if side == "UP" else Action.BUY_DOWN,
+            side=side,
+            confidence=min(snap.model_prob, 0.99),
+            edge=snap.edge,
+            model_prob=snap.model_prob,
+            market_price=market_price,
+            reason=f"BRK_ENTRY: d=${snap.distance:+.0f}, mom=${snap.momentum_30s:.1f}, t={snap.time_remaining:.0f}s"
+        )
 
     def evaluate_exit(self, snap: SignalSnapshot) -> TradeDecision:
         """Evaluate whether to exit an open position."""
