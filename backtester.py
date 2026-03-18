@@ -273,9 +273,11 @@ class Backtester:
     @staticmethod
     def print_results(result: BacktestResult):
         """Pretty-print backtest results."""
-        print("\n" + "═" * 60)
-        print("  📊 BACKTEST RESULTS")
-        print("═" * 60)
+        div = "=" * 60
+        subdiv = "-" * 37
+        print(f"\n{div}")
+        print("  BACKTEST RESULTS")
+        print(div)
         print(f"  Markets simulated:  {result.total_markets}")
         print(f"  Markets traded:     {result.markets_traded}")
         print(f"  Markets skipped:    {result.markets_skipped}")
@@ -283,14 +285,14 @@ class Backtester:
         print(f"  Wins:               {result.wins}")
         print(f"  Losses:             {result.losses}")
         print(f"  Win rate:           {result.win_rate:.1f}%")
-        print(f"  ─────────────────────────────────────")
+        print(f"  {subdiv}")
         print(f"  Total P&L:          ${result.total_pnl:+.2f}")
         print(f"  Average P&L:        ${result.avg_pnl:+.4f}")
         print(f"  Best trade:         ${result.best_trade:+.4f}")
         print(f"  Worst trade:        ${result.worst_trade:+.4f}")
         print(f"  Max drawdown:       ${result.max_drawdown:.2f}")
         print(f"  Average edge:       {result.avg_edge:.2f}%")
-        print("═" * 60 + "\n")
+        print(f"{div}\n")
 
 
 # ── Generate Sample Data ──────────────────────────────────────────────
