@@ -308,6 +308,18 @@
         .pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+        /* --- Toggle Switch --- */
+        .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--surface); transition: .3s; border-radius: 20px; border: 1px solid var(--border); }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: var(--text-dim); transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: rgba(180, 255, 0, 0.2); border-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(16px); background-color: var(--accent); box-shadow: 0 0 5px var(--accent-glow); }
+        
+        .strat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .strat-row:first-child { border-top: 1px solid var(--border); }
+        .strat-row:last-child { border-bottom: none; }
+
         /* Mobile */
         @media (max-width: 1100px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -448,8 +460,25 @@
                             Loading constraints...
                         </div>
                     </div>
+
                     <div class="status-item">
-                        <div class="label" style="margin-top: 20px;">Last Sync</div>
+                        <div class="label" style="margin-top: 20px; margin-bottom: 4px;">Active Strategies</div>
+                        <div class="strat-row">
+                            <span style="font-size: 13px; font-weight: 500;">Standard Late-Window</span>
+                            <label class="toggle"><input type="checkbox" id="stratStandard" onchange="toggleStrategy('standard', this.checked)"><span class="slider"></span></label>
+                        </div>
+                        <div class="strat-row">
+                            <span style="font-size: 13px; font-weight: 500;">Strike Crossing (Fade)</span>
+                            <label class="toggle"><input type="checkbox" id="stratCrossing" onchange="toggleStrategy('crossing', this.checked)"><span class="slider"></span></label>
+                        </div>
+                        <div class="strat-row">
+                            <span style="font-size: 13px; font-weight: 500;">Momentum Breakout</span>
+                            <label class="toggle"><input type="checkbox" id="stratBreakout" onchange="toggleStrategy('breakout', this.checked)"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="status-item">
+                        <div class="label" style="margin-top: 10px;">Last Sync</div>
                         <div class="val-row mono" id="lastSync" style="font-size: 11px; opacity: 0.5;">
                             —
                         </div>
@@ -460,6 +489,17 @@
     </main>
 
     <script>
+        async function toggleStrategy(key, value) {
+            try {
+                await fetch('/api/strategies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [key]: value })
+                });
+                update();
+            } catch (e) { console.error('Error updating strategy', e); }
+        }
+
         const formatUSD = (val) => {
             if (val === null || val === undefined) return '$0.00';
             const n = parseFloat(val);
@@ -542,6 +582,16 @@
                     document.getElementById('riskStatus').innerHTML = s.risk.can_trade ? 
                         '<span class="positive">● Strategy Nominal</span>' : 
                         `<span class="negative">● Restricted: ${s.risk.reason}</span>`;
+                }
+
+                if (s.strategies) {
+                    const st = s.strategies;
+                    const stStd = document.getElementById('stratStandard');
+                    const stCr = document.getElementById('stratCrossing');
+                    const stBk = document.getElementById('stratBreakout');
+                    if (stStd && document.activeElement !== stStd) stStd.checked = st.standard;
+                    if (stCr && document.activeElement !== stCr) stCr.checked = st.crossing;
+                    if (stBk && document.activeElement !== stBk) stBk.checked = st.breakout;
                 }
 
                 if (s.stats) {

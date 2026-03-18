@@ -8,7 +8,7 @@ import logging
 import threading
 from datetime import datetime, timezone
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 
 import config
 from data_store import DataStore
@@ -64,6 +64,11 @@ def api_state():
             "next_position_size": 0,
             "cooldown_active": False,
         },
+        "strategies": {
+            "standard": getattr(config, "ENABLE_STRATEGY_STANDARD", True),
+            "crossing": getattr(config, "ENABLE_STRATEGY_CROSSING", True),
+            "breakout": getattr(config, "ENABLE_STRATEGY_BREAKOUT", True),
+        },
         "stats": stats,
     })
 
@@ -82,6 +87,23 @@ def api_signals():
     if _store:
         return jsonify(_store.get_recent_signals(50))
     return jsonify([])
+
+
+@app.route("/api/strategies", methods=["POST"])
+def api_update_strategies():
+    """Update active trading strategies."""
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+        
+    if "standard" in data:
+        config.ENABLE_STRATEGY_STANDARD = bool(data["standard"])
+    if "crossing" in data:
+        config.ENABLE_STRATEGY_CROSSING = bool(data["crossing"])
+    if "breakout" in data:
+        config.ENABLE_STRATEGY_BREAKOUT = bool(data["breakout"])
+        
+    return jsonify({"success": True})
 
 
 @app.route("/api/stats")

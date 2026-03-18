@@ -383,6 +383,11 @@ class PolyBot:
                 "entry_price": self.strategy.current_position.entry_price,
                 "entry_edge": self.strategy.current_position.entry_edge,
             } if self.strategy.has_position() else None,
+            "strategies": {
+                "standard": getattr(config, "ENABLE_STRATEGY_STANDARD", True),
+                "crossing": getattr(config, "ENABLE_STRATEGY_CROSSING", True),
+                "breakout": getattr(config, "ENABLE_STRATEGY_BREAKOUT", True),
+            },
             "risk": self.risk.get_status(),
             "stats": self.store.get_stats(),
         }

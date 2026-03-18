@@ -99,25 +99,28 @@ class Strategy:
         skip_reasons = []
 
         # ── Strategy 1: Standard Late Window ───────────────────────
-        s1_decision = self._eval_standard(snap)
-        if s1_decision.action != Action.SKIP:
-            candidates.append(s1_decision)
-        else:
-            skip_reasons.extend(s1_decision.skip_reasons)
+        if getattr(config, "ENABLE_STRATEGY_STANDARD", True):
+            s1_decision = self._eval_standard(snap)
+            if s1_decision.action != Action.SKIP:
+                candidates.append(s1_decision)
+            else:
+                skip_reasons.extend(s1_decision.skip_reasons)
 
         # ── Strategy 2: Strike Crossing (Mean Reversion) ───────────
-        s2_decision = self._eval_strike_crossing(snap)
-        if s2_decision.action != Action.SKIP:
-            candidates.append(s2_decision)
-        else:
-            skip_reasons.extend(s2_decision.skip_reasons)
+        if getattr(config, "ENABLE_STRATEGY_CROSSING", True):
+            s2_decision = self._eval_strike_crossing(snap)
+            if s2_decision.action != Action.SKIP:
+                candidates.append(s2_decision)
+            else:
+                skip_reasons.extend(s2_decision.skip_reasons)
 
         # ── Strategy 3: Early Momentum Breakout ────────────────────
-        s3_decision = self._eval_momentum_breakout(snap)
-        if s3_decision.action != Action.SKIP:
-            candidates.append(s3_decision)
-        else:
-            skip_reasons.extend(s3_decision.skip_reasons)
+        if getattr(config, "ENABLE_STRATEGY_BREAKOUT", True):
+            s3_decision = self._eval_momentum_breakout(snap)
+            if s3_decision.action != Action.SKIP:
+                candidates.append(s3_decision)
+            else:
+                skip_reasons.extend(s3_decision.skip_reasons)
 
         if candidates:
             # Pick the candidate with the highest edge

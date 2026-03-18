@@ -26,6 +26,11 @@ EXIT_WINDOW_SECS = 10           # Stop entering in the last N seconds (too risky
 POLL_INTERVAL_SECS = 1          # Signal computation interval
 MARKET_DURATION_SECS = 900      # 15 minutes
 
+# ── Strategy Selection ─────────────────────────────────────────────────
+ENABLE_STRATEGY_STANDARD = True
+ENABLE_STRATEGY_CROSSING = True
+ENABLE_STRATEGY_BREAKOUT = True
+
 # ── Strategy Thresholds ────────────────────────────────────────────────
 MIN_DISTANCE_USD = 40.0         # Min BTC distance from start price to consider
 MIN_EDGE_PCT = 3.0              # Min probability edge above fee (%)
