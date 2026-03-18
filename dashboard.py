@@ -42,6 +42,10 @@ def api_state():
         return jsonify(_bot_ref.get_state())
 
     # Fallback: just return data store info
+    stats = _store.get_stats() if _store else {}
+    daily_pnl = _store.get_daily_pnl() if _store else 0
+    daily_trades = _store.get_daily_trade_count() if _store else 0
+
     return jsonify({
         "status": "DASHBOARD_ONLY",
         "dry_run": config.DRY_RUN,
@@ -51,16 +55,16 @@ def api_state():
         "signal": {},
         "position": None,
         "risk": {
-            "can_trade": True,
-            "reason": "ok",
+            "can_trade": False,
+            "reason": "bot_not_running",
             "bankroll": 0,
-            "daily_pnl": _store.get_daily_pnl() if _store else 0,
-            "daily_trades": _store.get_daily_trade_count() if _store else 0,
+            "daily_pnl": daily_pnl,
+            "daily_trades": daily_trades,
             "consecutive_losses": 0,
             "next_position_size": 0,
             "cooldown_active": False,
         },
-        "stats": _store.get_stats() if _store else {},
+        "stats": stats,
     })
 
 

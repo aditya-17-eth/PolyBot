@@ -3,478 +3,610 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PolyBot Dashboard</title>
+    <title>PolyBot │ Institutional Grade BTC Trading</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0e17;
-            --surface: #131a2b;
-            --surface2: #1a2340;
-            --border: #1e2d4a;
-            --text: #e0e6f0;
-            --text-dim: #7a8ba8;
-            --accent: #3b82f6;
-            --green: #22c55e;
-            --red: #ef4444;
-            --amber: #f59e0b;
-            --purple: #a855f7;
+            --bg: #040712;
+            --surface: rgba(13, 20, 38, 0.7);
+            --surface-hover: rgba(18, 28, 54, 0.8);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(59, 130, 246, 0.3);
+            --text: #F8FAFC;
+            --text-dim: #94A3B8;
+            --accent: #3B82F6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --green: #10B981;
+            --red: #EF4444;
+            --amber: #F59E0B;
+            --glass: rgba(255, 255, 255, 0.03);
+            --font-ui: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: var(--font-ui);
             background: var(--bg);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
             color: var(--text);
             min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
         }
 
+        /* --- Header --- */
         .header {
-            background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
-            border-bottom: 1px solid var(--border);
-            padding: 16px 24px;
+            padding: 24px 40px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            backdrop-filter: blur(20px);
+            background: rgba(4, 7, 18, 0.8);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), #A855F7);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px var(--accent-glow);
         }
 
         .header h1 {
-            font-size: 20px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent), var(--purple));
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #FFF, #CBD5E1);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .header .mode-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
+        .mode-badge {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mode-dry { background: rgba(245, 158, 11, 0.1); color: var(--amber); border-color: rgba(245, 158, 11, 0.2); }
+        .mode-live { background: rgba(239, 68, 68, 0.15); color: var(--red); border-color: rgba(239, 68, 68, 0.3); box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
+
+        /* --- Main Layout --- */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 40px;
+        }
+
+        /* --- Stats Row --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+            background: var(--surface-hover);
+        }
+
+        .stat-card .label {
             font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .mode-dry { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
-        .mode-live { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
-
-        .status-bar {
-            background: var(--surface);
-            padding: 10px 24px;
-            font-size: 13px;
             color: var(--text-dim);
-            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
             display: flex;
-            gap: 24px;
+            align-items: center;
+            gap: 6px;
         }
 
-        .status-bar .dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
-            animation: pulse 2s infinite;
-        }
-
-        .dot-green { background: var(--green); }
-        .dot-red { background: var(--red); }
-        .dot-amber { background: var(--amber); }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-            padding: 20px 24px;
-        }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            transition: border-color 0.2s;
-        }
-
-        .card:hover { border-color: var(--accent); }
-
-        .card h3 {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-dim);
-            margin-bottom: 12px;
-        }
-
-        .card .value {
-            font-size: 28px;
+        .stat-card .value {
+            font-family: var(--font-mono);
+            font-size: 32px;
             font-weight: 700;
-            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
         }
 
-        .card .sub {
+        .stat-card .sub {
             font-size: 13px;
             color: var(--text-dim);
-            margin-top: 4px;
+            margin-top: 6px;
         }
 
-        .positive { color: var(--green); }
-        .negative { color: var(--red); }
-        .neutral { color: var(--text-dim); }
-
-        .wide-card {
-            grid-column: 1 / -1;
+        /* --- Main Dashboard Sections --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 32px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
+        .main-col { display: flex; flex-direction: column; gap: 32px; }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        th {
-            text-align: left;
-            padding: 8px 12px;
-            color: var(--text-dim);
-            font-weight: 500;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid var(--border);
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
         }
 
-        td {
-            padding: 8px 12px;
-            border-bottom: 1px solid rgba(30, 45, 74, 0.5);
-            font-variant-numeric: tabular-nums;
-        }
-
-        tr:hover td { background: rgba(59, 130, 246, 0.05); }
-
-        .signal-bar {
+        /* --- Market & Signal Panel --- */
+        .market-panel {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            margin: 0 24px 16px;
-            padding: 16px 20px;
+            border-radius: 20px;
+            padding: 24px;
         }
 
-        .signal-bar h3 {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .market-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .market-info h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .market-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
             color: var(--text-dim);
-            margin-bottom: 10px;
         }
 
+        .countdown-container {
+            text-align: right;
+        }
+
+        .countdown-timer {
+            font-family: var(--font-mono);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* --- Signal Heatmap --- */
         .signal-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
         }
 
-        .signal-item {
-            background: var(--surface2);
-            border-radius: 8px;
-            padding: 8px 12px;
-        }
-
-        .signal-item .label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-dim);
-        }
-
-        .signal-item .val {
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 2px;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .position-banner {
-            margin: 0 24px 16px;
-            padding: 14px 20px;
+        .signal-box {
+            background: var(--glass);
+            border: 1px solid var(--border);
             border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .signal-box:hover { background: rgba(255, 255, 255, 0.05); }
+
+        .signal-box .label { font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; }
+        .signal-box .val { font-family: var(--font-mono); font-size: 18px; font-weight: 600; }
+
+        /* --- Active Position --- */
+        .active-position {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02));
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-weight: 600;
+            animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .position-up {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            color: var(--green);
+        .pos-down {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.02));
+            border-color: rgba(239, 68, 68, 0.2);
         }
 
-        .position-down {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: var(--red);
+        @keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* --- Trades Table --- */
+        .trades-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
         }
 
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: var(--text-dim);
-            font-size: 12px;
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            text-align: left; 
+            padding: 16px 20px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: var(--text-dim); 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em;
+            background: rgba(0,0,0,0.2);
+        }
+        td { 
+            padding: 14px 20px; 
+            font-size: 13px; 
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-ui);
+        }
+        tr:last-child td { border-bottom: none; }
+        .mono { font-family: var(--font-mono); }
+
+        /* --- Right Sidebar --- */
+        .side-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            height: fit-content;
+            position: sticky;
+            top: 110px;
+        }
+
+        .status-list { display: flex; flex-direction: column; gap: 20px; }
+        .status-item { display: flex; flex-direction: column; gap: 8px; }
+        .status-item .label { font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+        .status-item .val-row { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+
+        .indicator { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .ind-online { background: var(--green); box-shadow: 0 0 10px var(--green); }
+        .ind-offline { background: var(--red); box-shadow: 0 0 10px var(--red); }
+        .ind-amber { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
+
+        /* --- Utilities --- */
+        .positive { color: var(--green); }
+        .negative { color: var(--red); }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* Mobile */
+        @media (max-width: 1100px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .side-panel { position: static; }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🤖 PolyBot Dashboard</h1>
-        <span id="modeBadge" class="mode-badge mode-dry">DRY RUN</span>
-    </div>
-
-    <div class="status-bar">
-        <span><span id="wsDot" class="dot dot-red"></span> <span id="wsStatus">Disconnected</span></span>
-        <span>Status: <strong id="botStatus">—</strong></span>
-        <span>BTC: <strong id="btcPrice">$—</strong></span>
-        <span id="timeRemaining"></span>
-    </div>
-
-    <div id="positionBanner"></div>
-
-    <div class="grid">
-        <div class="card">
-            <h3>Daily P&L</h3>
-            <div id="dailyPnl" class="value neutral">$0.00</div>
-            <div class="sub" id="dailyTrades">0 trades today</div>
+    <header class="header">
+        <div class="logo-group">
+            <div class="logo-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            </div>
+            <h1>POLYBOT<span style="color: var(--accent); opacity: 0.5; font-weight: 400; font-family: var(--font-mono); margin-left:8px;">v1.0</span></h1>
         </div>
-        <div class="card">
-            <h3>Total P&L</h3>
-            <div id="totalPnl" class="value neutral">$0.00</div>
-            <div class="sub" id="totalTrades">0 total trades</div>
-        </div>
-        <div class="card">
-            <h3>Win Rate</h3>
-            <div id="winRate" class="value">0%</div>
-            <div class="sub" id="winLoss">0W / 0L</div>
-        </div>
-        <div class="card">
-            <h3>Bankroll</h3>
-            <div id="bankroll" class="value">$0.00</div>
-            <div class="sub" id="nextBet">Next bet: $0.00</div>
-        </div>
-    </div>
+        <div id="modeBadge" class="mode-badge mode-dry">DRY RUN</div>
+    </header>
 
-    <div class="signal-bar">
-        <h3>Live Signals</h3>
-        <div class="signal-grid">
-            <div class="signal-item">
-                <div class="label">Distance</div>
-                <div class="val" id="sigDistance">$0.00</div>
+    <main class="container">
+        <!-- Stats Row -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Daily P&L</div>
+                <div id="dailyPnl" class="value positive">$0.00</div>
+                <div id="dailyTrades" class="sub">0 trades today</div>
             </div>
-            <div class="signal-item">
-                <div class="label">Direction</div>
-                <div class="val" id="sigDirection">—</div>
+            <div class="stat-card">
+                <div class="label">Total Return</div>
+                <div id="totalPnl" class="value positive">$0.00</div>
+                <div id="totalTrades" class="sub">0 total trades</div>
             </div>
-            <div class="signal-item">
-                <div class="label">Vol (60s)</div>
-                <div class="val" id="sigVol">$0.00</div>
+            <div class="stat-card">
+                <div class="label">Win Rate</div>
+                <div id="winRate" class="value">0.0%</div>
+                <div id="winLoss" class="sub">0W / 0L</div>
             </div>
-            <div class="signal-item">
-                <div class="label">Momentum</div>
-                <div class="val" id="sigMomentum">$0.00</div>
-            </div>
-            <div class="signal-item">
-                <div class="label">Model Prob</div>
-                <div class="val" id="sigModelProb">0.000</div>
-            </div>
-            <div class="signal-item">
-                <div class="label">Market Prob</div>
-                <div class="val" id="sigMarketProb">0.000</div>
-            </div>
-            <div class="signal-item">
-                <div class="label">Edge</div>
-                <div class="val" id="sigEdge">0.0%</div>
-            </div>
-            <div class="signal-item">
-                <div class="label">OB Imbalance</div>
-                <div class="val" id="sigImbalance">0.000</div>
+            <div class="stat-card">
+                <div class="label">Bankroll</div>
+                <div id="bankroll" class="value">$0.00</div>
+                <div id="nextBet" class="sub">Next bet: $0.00</div>
             </div>
         </div>
-    </div>
 
-    <div class="grid">
-        <div class="card wide-card">
-            <h3>Recent Trades</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Side</th>
-                        <th>Entry</th>
-                        <th>Exit</th>
-                        <th>Size</th>
-                        <th>P&L</th>
-                        <th>Edge</th>
-                        <th>Reason</th>
-                    </tr>
-                </thead>
-                <tbody id="tradesBody">
-                    <tr><td colspan="8" style="text-align:center; color: var(--text-dim)">No trades yet</td></tr>
-                </tbody>
-            </table>
+        <div id="positionContainer"></div>
+
+        <div class="dashboard-grid">
+            <div class="main-col">
+                <!-- Market & Signals -->
+                <div class="market-panel">
+                    <div class="market-header">
+                        <div class="market-info">
+                            <div class="label" style="font-size:10px; margin-bottom:4px;">Current Market</div>
+                            <h2 id="marketQuestion">Searching for active markets...</h2>
+                            <div class="market-meta">
+                                <span>Start: <strong id="marketStartPrice" class="mono text-white">$—</strong></span>
+                                <span>BTC: <strong id="btcPrice" class="mono text-white">$—</strong></span>
+                            </div>
+                        </div>
+                        <div class="countdown-container">
+                            <div class="label" style="font-size:10px; margin-bottom:4px;">Time Remaining</div>
+                            <div id="timeRemaining" class="countdown-timer">00:00</div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">Live Intelligence</div>
+                    <div class="signal-grid">
+                        <div class="signal-box">
+                            <div class="label">Distance</div>
+                            <div id="sigDistance" class="val">$0.00</div>
+                        </div>
+                        <div class="signal-box">
+                            <div class="label">Volatility (60s)</div>
+                            <div id="sigVol" class="val">$0.00</div>
+                        </div>
+                        <div class="signal-box">
+                            <div class="label">Model Prob</div>
+                            <div id="sigModelProb" class="val">0.000</div>
+                        </div>
+                        <div class="signal-box">
+                            <div class="label">Market Prob</div>
+                            <div id="sigMarketProb" class="val">0.000</div>
+                        </div>
+                        <div class="signal-box" style="border-color: var(--accent-glow); background: rgba(59, 130, 246, 0.05);">
+                            <div class="label" style="color: var(--accent);">Edge</div>
+                            <div id="sigEdge" class="val" style="color: var(--accent);">0.0%</div>
+                        </div>
+                        <div class="signal-box">
+                            <div class="label">OB Imbalance</div>
+                            <div id="sigImbalance" class="val">0.000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent History -->
+                <div class="trades-section">
+                    <div class="section-title">Execution History</div>
+                    <div class="trades-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Asset</th>
+                                    <th>Entry</th>
+                                    <th>Exit</th>
+                                    <th>Size</th>
+                                    <th>P&L</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tradesBody">
+                                <tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--text-dim);">No trade activity recorded</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="section-title">System Status</div>
+                <div class="status-list">
+                    <div class="status-item">
+                        <div class="label">Engine Status</div>
+                        <div class="val-row">
+                            <span id="botStatus">Initializing...</span>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Connectivity</div>
+                        <div class="val-row">
+                            <span id="wsDot" class="indicator ind-offline pulse"></span>
+                            <span id="wsStatus">Connecting to Binance...</span>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">Risk Constraints</div>
+                        <div class="val-row" id="riskStatus" style="font-size: 12px; color: var(--text-dim);">
+                            Loading constraints...
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="label" style="margin-top: 20px;">Last Sync</div>
+                        <div class="val-row mono" id="lastSync" style="font-size: 11px; opacity: 0.5;">
+                            —
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <div class="footer">
-        PolyBot v1.0 — Auto-refreshes every 2 seconds
-    </div>
+    </main>
 
     <script>
-        function formatUSD(val) {
+        const formatUSD = (val) => {
             if (val === null || val === undefined) return '$0.00';
             const n = parseFloat(val);
-            return (n >= 0 ? '+' : '') + '$' + n.toFixed(2);
-        }
+            return (n >= 0 ? '+$' : '-$') + Math.abs(n).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        };
 
-        function pnlClass(val) {
+        const pnlClass = (val) => {
             const n = parseFloat(val);
-            return n > 0 ? 'positive' : n < 0 ? 'negative' : 'neutral';
-        }
+            return n > 0 ? 'positive' : n < 0 ? 'negative' : '';
+        };
 
-        async function refresh() {
+        async function update() {
             try {
                 const res = await fetch('/api/state');
                 const s = await res.json();
-
-                // Mode badge
+                
+                // Header & Mode
                 const badge = document.getElementById('modeBadge');
-                if (s.dry_run) {
-                    badge.textContent = 'DRY RUN';
-                    badge.className = 'mode-badge mode-dry';
-                } else {
-                    badge.textContent = 'LIVE';
-                    badge.className = 'mode-badge mode-live';
-                }
+                badge.textContent = s.dry_run ? 'Dry Run' : 'Live Trading';
+                badge.className = `mode-badge ${s.dry_run ? 'mode-dry' : 'mode-live'}`;
 
-                // WebSocket status
+                // Connection
                 const dot = document.getElementById('wsDot');
-                const wsText = document.getElementById('wsStatus');
-                if (s.ws_connected) {
-                    dot.className = 'dot dot-green';
-                    wsText.textContent = 'Connected';
-                } else {
-                    dot.className = 'dot dot-amber';
-                    wsText.textContent = 'Reconnecting...';
-                }
+                const status = document.getElementById('wsStatus');
+                dot.className = `indicator ${s.ws_connected ? 'ind-online' : 'ind-amber'} pulse`;
+                status.textContent = s.ws_connected ? 'Real-time Feed Online' : 'Reconnecting...';
 
-                // Bot status
-                document.getElementById('botStatus').textContent = s.status || '—';
+                // Bot Status
+                document.getElementById('botStatus').textContent = s.status || 'Idle';
+                document.getElementById('btcPrice').textContent = '$' + (parseFloat(s.btc_price) || 0).toLocaleString();
+                document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
 
-                // BTC price
-                const price = parseFloat(s.btc_price || 0);
-                document.getElementById('btcPrice').textContent = price > 0 ? '$' + price.toLocaleString(undefined, {maximumFractionDigits: 2}) : '$—';
-
-                // Market timing
-                const timeEl = document.getElementById('timeRemaining');
-                if (s.market && s.market.seconds_remaining > 0) {
-                    const sec = Math.floor(s.market.seconds_remaining);
+                // Market
+                if (s.market) {
+                    document.getElementById('marketQuestion').textContent = s.market.question || 'BTC 15m Market';
+                    document.getElementById('marketStartPrice').textContent = '$' + parseFloat(s.market.start_price).toLocaleString();
+                    
+                    const sec = Math.max(0, Math.floor(s.market.seconds_remaining));
                     const min = Math.floor(sec / 60);
                     const rem = sec % 60;
-                    timeEl.textContent = `Market: ${min}:${String(rem).padStart(2, '0')} remaining`;
-                    if (s.market.in_entry_window) {
-                        timeEl.style.color = '#22c55e';
-                        timeEl.style.fontWeight = '700';
-                    } else {
-                        timeEl.style.color = '';
-                        timeEl.style.fontWeight = '';
-                    }
-                } else {
-                    timeEl.textContent = '';
+                    const timer = document.getElementById('timeRemaining');
+                    timer.textContent = `${min}:${String(rem).padStart(2, '0')}`;
+                    timer.style.color = s.market.in_entry_window ? 'var(--green)' : 'var(--text)';
                 }
 
-                // Position banner
-                const posBanner = document.getElementById('positionBanner');
+                // Active Position
+                const posContainer = document.getElementById('positionContainer');
                 if (s.position) {
-                    const cls = s.position.side === 'UP' ? 'position-up' : 'position-down';
-                    posBanner.innerHTML = `<div class="position-banner ${cls}" style="margin: 0 24px 16px;">
-                        <span>📌 POSITION: ${s.position.side} @ ${parseFloat(s.position.entry_price).toFixed(3)}</span>
-                        <span>Edge: ${parseFloat(s.position.entry_edge).toFixed(1)}%</span>
-                    </div>`;
+                    const isUp = s.position.side === 'UP';
+                    posContainer.innerHTML = `
+                        <div class="active-position ${!isUp ? 'pos-down' : ''}">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div class="logo-icon" style="background: ${isUp ? 'var(--green)' : 'var(--red)'}; box-shadow: 0 0 20px ${isUp ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}">
+                                    ${isUp ? '▲' : '▼'}
+                                </div>
+                                <div>
+                                    <div class="label" style="font-size:10px; opacity:0.6;">Active Position</div>
+                                    <div style="font-weight:800; font-size:18px;">${s.position.side} <span class="mono" style="font-weight:400; opacity:0.6; margin-left:8px;">@ ${parseFloat(s.position.entry_price).toFixed(3)}</span></div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="label" style="font-size:10px; opacity:0.6;">Theoretical Edge</div>
+                                <div class="mono" style="font-weight:700; font-size:20px; color: var(--accent);">${parseFloat(s.position.entry_edge).toFixed(1)}%</div>
+                            </div>
+                        </div>
+                    `;
                 } else {
-                    posBanner.innerHTML = '';
+                    posContainer.innerHTML = '';
                 }
 
-                // Stats cards
+                // Stats
                 if (s.risk) {
                     const dp = parseFloat(s.risk.daily_pnl || 0);
-                    document.getElementById('dailyPnl').textContent = formatUSD(dp);
-                    document.getElementById('dailyPnl').className = 'value ' + pnlClass(dp);
-                    document.getElementById('dailyTrades').textContent = (s.risk.daily_trades || 0) + ' trades today';
-                    document.getElementById('bankroll').textContent = '$' + parseFloat(s.risk.bankroll || 0).toFixed(2);
-                    document.getElementById('nextBet').textContent = 'Next bet: $' + parseFloat(s.risk.next_position_size || 0).toFixed(2);
+                    const pnlEl = document.getElementById('dailyPnl');
+                    pnlEl.textContent = formatUSD(dp);
+                    pnlEl.className = 'value ' + pnlClass(dp);
+                    document.getElementById('dailyTrades').textContent = `${s.risk.daily_trades || 0} trades executed today`;
+                    document.getElementById('bankroll').textContent = '$' + parseFloat(s.risk.bankroll || 0).toLocaleString(undefined, {minimumFractionDigits: 2});
+                    document.getElementById('nextBet').textContent = 'Next Position: $' + parseFloat(s.risk.next_position_size || 0).toFixed(2);
+                    document.getElementById('riskStatus').innerHTML = s.risk.can_trade ? 
+                        '<span class="positive">● Strategy Nominal</span>' : 
+                        `<span class="negative">● Restricted: ${s.risk.reason}</span>`;
                 }
 
                 if (s.stats) {
                     const tp = parseFloat(s.stats.total_pnl || 0);
-                    document.getElementById('totalPnl').textContent = formatUSD(tp);
-                    document.getElementById('totalPnl').className = 'value ' + pnlClass(tp);
-                    document.getElementById('totalTrades').textContent = (s.stats.total_trades || 0) + ' total trades';
+                    const tpEl = document.getElementById('totalPnl');
+                    tpEl.textContent = formatUSD(tp);
+                    tpEl.className = 'value ' + pnlClass(tp);
+                    document.getElementById('totalTrades').textContent = `${s.stats.total_trades || 0} lifetime trades`;
                     document.getElementById('winRate').textContent = parseFloat(s.stats.win_rate || 0).toFixed(1) + '%';
-                    document.getElementById('winLoss').textContent = (s.stats.wins || 0) + 'W / ' + (s.stats.losses || 0) + 'L';
+                    document.getElementById('winLoss').textContent = `${s.stats.wins || 0} Wins / ${s.stats.losses || 0} Losses`;
                 }
 
-                // Live signals
+                // Signals
                 if (s.signal) {
                     const sig = s.signal;
-                    document.getElementById('sigDistance').textContent = '$' + parseFloat(sig.distance || 0).toFixed(2);
-                    document.getElementById('sigDistance').className = 'val ' + ((sig.distance || 0) > 0 ? 'positive' : (sig.distance || 0) < 0 ? 'negative' : '');
-                    document.getElementById('sigDirection').textContent = sig.direction || '—';
+                    const d = parseFloat(sig.distance || 0);
+                    const dEl = document.getElementById('sigDistance');
+                    dEl.textContent = (d > 0 ? '+' : '') + d.toFixed(2);
+                    dEl.className = 'val ' + pnlClass(d);
+                    
                     document.getElementById('sigVol').textContent = '$' + parseFloat(sig.volatility_60s || 0).toFixed(2);
-                    document.getElementById('sigMomentum').textContent = '$' + parseFloat(sig.momentum_30s || 0).toFixed(2);
                     document.getElementById('sigModelProb').textContent = parseFloat(sig.model_prob || 0).toFixed(3);
                     document.getElementById('sigMarketProb').textContent = parseFloat(
                         sig.direction === 'UP' ? (sig.market_prob_up || 0) : (sig.market_prob_down || 0)
                     ).toFixed(3);
+                    
                     const edge = parseFloat(sig.edge || 0);
-                    document.getElementById('sigEdge').textContent = edge.toFixed(1) + '%';
-                    document.getElementById('sigEdge').className = 'val ' + (edge > 3 ? 'positive' : edge > 0 ? 'neutral' : 'negative');
+                    const edgeEl = document.getElementById('sigEdge');
+                    edgeEl.textContent = edge.toFixed(1) + '%';
+                    edgeEl.style.color = edge > 3 ? 'var(--green)' : edge > 0 ? 'var(--accent)' : 'var(--red)';
+                    
                     document.getElementById('sigImbalance').textContent = parseFloat(sig.ob_imbalance || 0).toFixed(3);
                 }
 
-            } catch (e) {
-                console.error('Refresh error:', e);
-            }
+            } catch (e) { console.error(e); }
 
-            // Refresh trades table
+            // Trades Table
             try {
-                const tRes = await fetch('/api/trades');
-                const trades = await tRes.json();
+                const res = await fetch('/api/trades');
+                const trades = await res.json();
                 const tbody = document.getElementById('tradesBody');
 
-                if (trades.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: var(--text-dim)">No trades yet</td></tr>';
-                } else {
-                    tbody.innerHTML = trades.slice(0, 20).map(t => {
+                if (trades.length > 0) {
+                    tbody.innerHTML = trades.slice(0, 15).map(t => {
                         const pnl = parseFloat(t.pnl || 0);
-                        const cls = pnlClass(pnl);
-                        return `<tr>
-                            <td>${(t.timestamp || '').slice(11, 19)}</td>
-                            <td><strong>${t.side || '—'}</strong></td>
-                            <td>${parseFloat(t.entry_price || 0).toFixed(3)}</td>
-                            <td>${parseFloat(t.exit_price || 0).toFixed(3)}</td>
-                            <td>$${parseFloat(t.size_usd || 0).toFixed(2)}</td>
-                            <td class="${cls}">${formatUSD(pnl)}</td>
-                            <td>${parseFloat(t.edge || 0).toFixed(1)}%</td>
-                            <td style="color: var(--text-dim)">${t.exit_reason || '—'}</td>
-                        </tr>`;
+                        return `
+                            <tr>
+                                <td class="mono" style="opacity:0.6;">${(t.timestamp || '').slice(11, 16)}</td>
+                                <td><span style="font-weight:700; color: ${t.side === 'UP' ? 'var(--green)' : 'var(--red)'}">${t.side}</span></td>
+                                <td class="mono">${parseFloat(t.entry_price || 0).toFixed(3)}</td>
+                                <td class="mono">${parseFloat(t.exit_price || 0).toFixed(3)}</td>
+                                <td class="mono">$${parseFloat(t.size_usd || 0).toFixed(2)}</td>
+                                <td class="mono ${pnlClass(pnl)}">${formatUSD(pnl)}</td>
+                                <td><span style="font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.05); color:var(--text-dim);">${t.exit_reason || 'SETTLED'}</span></td>
+                            </tr>
+                        `;
                     }).join('');
                 }
             } catch (e) {}
         }
 
-        // Initial refresh + auto-refresh
-        refresh();
-        setInterval(refresh, 2000);
+        setInterval(update, 1000);
+        update();
     </script>
 </body>
 </html>
