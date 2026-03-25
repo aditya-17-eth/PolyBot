@@ -51,7 +51,6 @@ python dashboard.py
 - 60-second volatility ≥ $15
 - Market spread ≤ 5%
 - No liquidity trap detected
-- Momentum aligned with direction
 
 ## Risk Controls
 
